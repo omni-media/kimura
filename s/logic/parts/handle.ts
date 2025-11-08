@@ -1,6 +1,6 @@
 import {FederatedPointerEvent, Graphics, Point} from "pixi.js"
 
-export type Corner = 'tl' | 'tr' | 'bl' | 'br'
+export type Corner = 'tl' | 'tr' | 'bl' | 'br' | 'rot'
 interface Callbacks {
 	beginDrag: (corner: Corner, start: Point) => void
 	updateDrag: (corner: Corner, pos: Point) => void

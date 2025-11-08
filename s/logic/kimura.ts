@@ -26,6 +26,7 @@ export class Kimura extends Container {
 	#childStart = new Map<Container, Matrix>()
 	#opBounds = new Rectangle()
 	#pivot = new Point()
+	#startAngle = 0
 
 	constructor(opts: {group: Container[]}) {
 		super()
@@ -33,17 +34,24 @@ export class Kimura extends Container {
 
 		this.eventMode = 'static'
 
-		const callbacks = {
+		const scaleCallbacks = {
 			beginDrag: (corner: Corner, start: Point) => this.#beginHandleDrag(corner, start),
 			updateDrag: (corner: Corner, pos: Point) => this.#scale(corner, pos),
 			endDrag: () => (this.isDragging = false),
 		}
 
+		const rotateCallbacks = {
+			beginDrag: (_corner: Corner, start: Point) => this.#beginRotateDrag(start),
+			updateDrag: (_corner: Corner, pos: Point) => this.#rotate(pos),
+			endDrag: () => (this.isDragging = false),
+		}
+
 		this.#handles = {
-			tl: new Handle('tl', 'nwse-resize', callbacks),
-			tr: new Handle('tr', 'nesw-resize', callbacks),
-			bl: new Handle('bl', 'nesw-resize', callbacks),
-			br: new Handle('br', 'nwse-resize', callbacks),
+			tl: new Handle('tl', 'nwse-resize', scaleCallbacks),
+			tr: new Handle('tr', 'nesw-resize', scaleCallbacks),
+			bl: new Handle('bl', 'nesw-resize', scaleCallbacks),
+			br: new Handle('br', 'nwse-resize', scaleCallbacks),
+			rot: new Handle('rot', 'crosshair', rotateCallbacks),
 		}
 		
 		for (const handle of Object.values(this.#handles)) {
@@ -132,6 +140,41 @@ export class Kimura extends Container {
 		this.#refresh()
 	}
 
+	#beginRotateDrag(start: Point) {
+		this.isDragging = true
+		this.#childStart.clear()
+
+		for (const c of this.group)
+			this.#childStart.set(c, c.localTransform.clone())
+
+		this.#opBounds.copyFrom(this.#computeGroupBounds())
+
+		// center of the group
+		const b = this.#opBounds
+		this.#pivot.set(b.x + b.width / 2, b.y + b.height / 2)
+
+		// pointer start angle
+		const local = this.toLocal(start)
+		this.#startAngle = Math.atan2(local.y - this.#pivot.y, local.x - this.#pivot.x)
+	}
+
+	#rotate(global: Point) {
+		const local = this.toLocal(global)
+		const currentAngle = Math.atan2(local.y - this.#pivot.y, local.x - this.#pivot.x)
+		const da = currentAngle - this.#startAngle
+
+		for (const c of this.group) {
+			const start = this.#childStart.get(c)!
+			const delta = TMP.delta.identity()
+				.translate(-this.#pivot.x, -this.#pivot.y)
+				.rotate(da)
+				.translate(this.#pivot.x, this.#pivot.y)
+			c.setFromMatrix(TMP.newLocal.copyFrom(delta).append(start))
+		}
+
+		this.#refresh()
+	}
+
 	#refresh() {
 		const b = this.#computeGroupBounds()
 		this.wireframe.draw(b)
@@ -143,6 +186,10 @@ export class Kimura extends Container {
 		this.#handles.tr.position.set(b.x + b.width, b.y)
 		this.#handles.bl.position.set(b.x, b.y + b.height)
 		this.#handles.br.position.set(b.x + b.width, b.y + b.height)
+
+		// position rotate handle
+		const cx = b.x + b.width / 2
+		this.#handles.rot.position.set(cx, b.y - 30)
 	}
 
 	#computeGroupBounds() {
