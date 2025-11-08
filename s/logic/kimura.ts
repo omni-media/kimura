@@ -108,28 +108,39 @@ export class Kimura extends Container {
 	}
 
 	#scale(corner: Corner, global: Point) {
-		const p = this.toLocal(global)
-		const newW = corner.includes('l') ? -p.x : p.x
-		const newH = corner.includes('t') ? -p.y : p.y
-		const scaleX = this.#opBounds.width ? newW / this.#opBounds.width : 1
-		const scaleY = this.#opBounds.height ? newH / this.#opBounds.height : 1
-		const pivotWorld = this.#pivot
-		for (const c of this.group) {
-			const start = this.#childStart.get(c)!
-			const parent = c.parent
-			if (!parent) continue
-			const parentInv = parent.worldTransform.clone().invert()
-			const worldDelta = TMP.delta.identity()
-				.translate(-pivotWorld.x, -pivotWorld.y)
-				.scale(scaleX, scaleY)
-				.translate(pivotWorld.x, pivotWorld.y)
-			const startWorld = start.clone().append(parent.worldTransform)
-			const newWorld = worldDelta.clone().append(startWorld)
-			const newLocal = parentInv.clone().append(newWorld)
-			c.setFromMatrix(newLocal)
-		}
-		this.#refresh()
-	}
+    const p = this.toLocal(global)
+      
+    const newW = corner.includes('l') ? -p.x : p.x
+    const newH = corner.includes('t') ? -p.y : p.y
+    
+    const scaleX = this.#opBounds.width ? newW / this.#opBounds.width : 1
+    const scaleY = this.#opBounds.height ? newH / this.#opBounds.height : 1
+    
+    const pivotWorld = this.#pivot
+    const angle = this.#angle
+
+    for (const c of this.group) {
+      const start = this.#childStart.get(c)!
+      const parent = c.parent
+      if (!parent) continue
+      const parentInv = parent.worldTransform.clone().invert()
+
+      // We must rotate, scale, and rotate back around the pivot
+      const worldDelta = TMP.delta.identity()
+        .translate(-pivotWorld.x, -pivotWorld.y) // 1. Move pivot to origin
+        .rotate(-angle)                          // 2. Un-rotate to align with world axes
+        .scale(scaleX, scaleY)                   // 3. Scale along aligned axes
+        .rotate(angle)                           // 4. Re-rotate to original angle
+        .translate(pivotWorld.x, pivotWorld.y)   // 5. Move pivot back
+
+      const startWorld = start.clone().append(parent.worldTransform)
+      const newWorld = worldDelta.clone().append(startWorld)
+      const newLocal = parentInv.clone().append(newWorld)
+      c.setFromMatrix(newLocal)
+    }
+
+    this.#refresh()
+  }
 
 	#beginRotateDrag(start: Point) {
 		this.isDragging = true
