@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "description": "A tool for interactively editing the transformation matrices of pixi objects.",
   "type": "module",
-  "main": "x/transformer.js",
+  "main": "x/index.js",
   "scripts": {
     "build": "run-s _clean _tsc _ln _scute",
     "start": "octo 'scute -vw' 'tsc -w' 'node --watch x/tests.test.js' 'http-server x'",
