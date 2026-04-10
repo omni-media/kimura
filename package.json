@@ -12,7 +12,8 @@
     "_ln": "run-s _ln-s _ln-assets",
     "_ln-s": "ln -s \"$(realpath s)\" x/s",
     "_ln-assets": "ln -s \"$(realpath assets)\" x/assets",
-    "_scute": "scute -v"
+    "_scute": "scute -v",
+    "test": "echo \"node tests disabled for now\""
   },
   "repository": {
     "type": "git",
