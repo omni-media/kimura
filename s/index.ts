@@ -1,1 +1,1 @@
-export {Kimura} from "./logic/kimura.js"
+export * from "./logic/kimura.js"
