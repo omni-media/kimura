@@ -1,4 +1,4 @@
-# @e280/kimura
+# @omnimedia/kimura
 <p align="center">
   <img src="assets/kimura.png" width="600px" alt="Kimura wireframe">
 </p>
@@ -9,7 +9,7 @@
 ## Installation :package:
 
 ```base
-npm install @e280/kimura
+npm install @omnimedia/kimura
 ```
 
 ## Usage :page_facing_up:

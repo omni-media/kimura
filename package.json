@@ -1,5 +1,5 @@
 {
-  "name": "@e280/kimura",
+  "name": "@omnimedia/kimura",
   "version": "1.0.1",
   "description": "A tool for interactively editing the transformation matrices of pixi objects.",
   "type": "module",
