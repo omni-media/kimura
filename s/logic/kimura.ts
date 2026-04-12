@@ -19,7 +19,7 @@ const TMP = {
 const isSide = (h: string): h is Side => h.startsWith('m')
 
 export class Kimura extends Container {
-	group: Container[]
+	#group: Container[]
 	wireframe = new Wireframe()
 	isDragging = false
 	lastPointer = new Point()
@@ -44,7 +44,7 @@ export class Kimura extends Container {
 
 	constructor(private opts: {group: Container[], centeredScaling?: boolean}) {
 		super()
-		this.group = opts.group
+		this.#group = opts.group
 		this.eventMode = 'static'
 
 		const cb = {
@@ -72,6 +72,18 @@ export class Kimura extends Container {
 		this.addChild(this.wireframe, this.#maskG, ...Object.values(this.#handles))
 		this.#bindEvents()
 		Ticker.shared.addOnce(() => this.#initBounds())
+	}
+
+	get group() { return this.#group }
+
+	set group(items: Container[]) {
+		this.#group = items
+		if (items.length > 0) {
+			this.#initBounds()
+		} else {
+			this.wireframe.clear() 
+			this.#maskG.clear()
+		}
 	}
 
 	#bindEvents() {
@@ -112,7 +124,7 @@ export class Kimura extends Container {
 		const dx = to.x - from.x
 		const dy = to.y - from.y
 
-		for (const obj of this.group) {
+		for (const obj of this.#group) {
 			obj.x += dx
 			obj.y += dy
 		}
@@ -129,7 +141,7 @@ export class Kimura extends Container {
 		this.activeHandle = handle
 		this.#childStart.clear()
 
-		for (const c of this.group)
+		for (const c of this.#group)
 			this.#childStart.set(c, c.localTransform.clone())
 
 		this.rotation = this.#angle
@@ -188,7 +200,7 @@ export class Kimura extends Container {
 		this.isDragging = true
 		this.activeHandle = 'rot'
 		this.#childStart.clear()
-		for (const c of this.group)
+		for (const c of this.#group)
 			this.#childStart.set(c, c.localTransform.clone())
 		this.#startAngle = Math.atan2(start.y - this.#pivotWorld.y, start.x - this.#pivotWorld.x)
 	}
@@ -211,7 +223,7 @@ export class Kimura extends Container {
 
 	#computeWorldAABB() {
 		let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-		for (const obj of this.group) {
+		for (const obj of this.#group) {
 			const b = obj.getBounds()
 			minX = Math.min(minX, b.x)
 			minY = Math.min(minY, b.y)
@@ -247,7 +259,7 @@ export class Kimura extends Container {
 		this.#maskG.drawRect(r.x, r.y, r.width, r.height)
 		this.#maskG.endFill()
 
-		for (const o of this.group)
+		for (const o of this.#group)
 			o.mask = this.#maskG
 	}
 
@@ -320,7 +332,7 @@ export class Kimura extends Container {
 	}
 
 	#applyWorldDelta(worldDelta: Matrix) {
-		for (const c of this.group) {
+		for (const c of this.#group) {
 			const start = this.#childStart.get(c)
 			const parent = c.parent
 			if (!start || !parent) continue
