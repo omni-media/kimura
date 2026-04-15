@@ -86,6 +86,14 @@ export class Kimura extends Container {
 		}
 	}
 
+	get worldCenter() {
+		return this.#pivotWorld.clone()
+	}
+
+	applyWorldDelta(matrix: Matrix) {
+		this.#applyWorldDelta(matrix)
+	}
+
 	#bindEvents() {
 		this.on('pointerdown', this.#onDown)
 		this.on('pointerup', this.#onUp)
