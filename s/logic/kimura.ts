@@ -5,11 +5,13 @@ import {
 	Rectangle,
 	Matrix,
 	Ticker,
-	Graphics
+	Graphics,
+	ContainerChild
 } from 'pixi.js'
 
 import {Wireframe} from './parts/wireframe.js'
 import {HandleKind, Handle, Side} from './parts/handle.js'
+import {AlignGuidelines} from './parts/align_guidelines.js'
 
 const TMP = {
 	delta: new Matrix(),
@@ -19,11 +21,14 @@ const TMP = {
 const isSide = (h: string): h is Side => h.startsWith('m')
 
 export class Kimura extends Container {
-	#group: Container[]
+	#group: Container[] = []
 	wireframe = new Wireframe()
 	isDragging = false
 	lastPointer = new Point()
 	activeHandle: HandleKind | null = null
+	guidelines
+	stageWidth: number
+	stageHeight: number
 
 	#handles: Record<string, Handle>
 	#childStart = new Map<Container, Matrix>()
@@ -42,10 +47,16 @@ export class Kimura extends Container {
 	#minClipW = 1
 	#minClipH = 1
 
-	constructor(private opts: {group: Container[], centeredScaling?: boolean}) {
+	constructor(private opts: {
+		stage: Container<ContainerChild>
+		centeredScaling?: boolean
+	}) {
 		super()
-		this.#group = opts.group
 		this.eventMode = 'static'
+		this.stageWidth = this.opts.stage.width
+		this.stageHeight = this.opts.stage.height
+		this.guidelines = new AlignGuidelines({stage: this.opts.stage, kimura: this})
+		this.guidelines.init()
 
 		const cb = {
 			beginDrag: (h: HandleKind, s: Point) => this.#beginHandleDrag(h, s),
@@ -71,12 +82,26 @@ export class Kimura extends Container {
 
 		this.addChild(this.wireframe, this.#maskG, ...Object.values(this.#handles))
 		this.#bindEvents()
+		this.on('globalpointermove', (e) => {
+			if (this.activeObject && this.isDragging) {
+				this.guidelines.on_object_move_or_scale(e)
+				this.guidelines.render()
+			}
+		})
 		Ticker.shared.addOnce(() => this.#initBounds())
+	}
+
+	get activeObject() {
+		return this.group[0]
 	}
 
 	get group() { return this.#group }
 
 	set group(items: Container[]) {
+		for (const obj of this.#group)
+			if (obj.mask === this.#maskG)
+				obj.mask = null
+
 		this.#group = items
 		if (items.length > 0) {
 			this.#initBounds()
@@ -92,6 +117,8 @@ export class Kimura extends Container {
 
 	applyWorldDelta(matrix: Matrix) {
 		this.#applyWorldDelta(matrix)
+		this.#pivotWorld.copyFrom(matrix.apply(this.#pivotWorld))
+		this.#refresh()
 	}
 
 	#bindEvents() {
@@ -102,14 +129,19 @@ export class Kimura extends Container {
 	}
 
 	#initBounds() {
+		this.#syncPivotFromGroup()
 		const ob = this.#computeWorldAABB()
-		this.#pivotWorld.set(ob.x + ob.width / 2, ob.y + ob.height / 2)
 
 		const local = new Rectangle(-ob.width / 2, -ob.height / 2, ob.width, ob.height)
 		this.#unclippedLocal.copyFrom(local)
 		this.#clippedLocal.copyFrom(local)
 
 		this.#refresh()
+	}
+
+	#syncPivotFromGroup() {
+		const ob = this.#computeWorldAABB()
+		this.#pivotWorld.set(ob.x + ob.width / 2, ob.y + ob.height / 2)
 	}
 
 	#onDown = (e: FederatedPointerEvent) => {
@@ -341,7 +373,7 @@ export class Kimura extends Container {
 
 	#applyWorldDelta(worldDelta: Matrix) {
 		for (const c of this.#group) {
-			const start = this.#childStart.get(c)
+			const start = this.#childStart.get(c) ?? c.localTransform.clone()
 			const parent = c.parent
 			if (!start || !parent) continue
 			const parentInv = parent.worldTransform.clone().invert()

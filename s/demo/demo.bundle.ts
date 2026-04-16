@@ -7,8 +7,8 @@ const app = new Application()
 await app.init({
     autoDensity: true,
     backgroundColor: 0xabcdef,
-    width: 1024,
-    height: 1024,
+    width: 1920,
+    height: 1080,
     antialias: true,
     view: document.createElement('canvas') ,
 })
@@ -25,7 +25,13 @@ b.circle(0, 0, 100)
 b.position.set(600, 400)
 a.position.set(300, 300)
 
-app.stage.addChild(new Kimura({
-    group: [b, a]
-}))
+for (const shape of [a, b]) {
+    shape.on('pointerdown', () => {
+        kimura.group = [shape]
+    })
+}
 
+const kimura = new Kimura({stage: app.stage})
+app.stage.addChild(kimura)
+
+kimura.group = [b]
