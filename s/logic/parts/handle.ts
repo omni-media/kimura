@@ -14,11 +14,12 @@ export class Handle extends Graphics {
 
 	constructor(
 		private handle: HandleKind,
-		public cursor: string,
+		public cursorName: string,
 		private callbacks: Callbacks
 	) {
 		super()
 		this.eventMode = 'static'
+		this.cursor = cursorName
 		this.#draw()
 
 		this.on('pointerdown', this.#onDown)
@@ -49,7 +50,7 @@ export class Handle extends Graphics {
 	#onUp = (e: FederatedPointerEvent) => {
 		if (!this.#isDragging) return
 		this.#isDragging = false
-		this.cursor = 'pointer'
+		this.cursor = this.cursorName
 		this.callbacks.endDrag()
 		e.stopPropagation()
 	}
