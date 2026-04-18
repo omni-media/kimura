@@ -38,13 +38,11 @@ export class Handle extends Graphics {
 		this.#isDragging = true
 		this.cursor = 'grabbing'
 		this.callbacks.beginDrag(this.handle, e.global)
-		e.stopPropagation()
 	}
 
 	#onMove = (e: FederatedPointerEvent) => {
 		if (!this.#isDragging) return
 		this.callbacks.updateDrag(this.handle, e.global)
-		e.stopPropagation()
 	}
 
 	#onUp = (e: FederatedPointerEvent) => {
@@ -52,6 +50,5 @@ export class Handle extends Graphics {
 		this.#isDragging = false
 		this.cursor = this.cursorName
 		this.callbacks.endDrag()
-		e.stopPropagation()
 	}
 }

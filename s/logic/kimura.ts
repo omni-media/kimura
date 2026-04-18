@@ -145,13 +145,15 @@ export class Kimura extends Container {
 	}
 
 	#onDown = (e: FederatedPointerEvent) => {
+		if (e.target instanceof Handle) return
 		this.isDragging = true
 		this.#childStart.clear()
 		this.lastPointer.copyFrom(e.global)
 		this.cursor = 'grabbing'
 	}
 
-	#onUp = () => {
+	#onUp = (e?: FederatedPointerEvent) => {
+		if (e?.target instanceof Handle) return
 		this.isDragging = false
 		this.activeHandle = null
 		this.#childStart.clear()
@@ -160,6 +162,7 @@ export class Kimura extends Container {
 	}
 
 	#onMove = (e: FederatedPointerEvent) => {
+		if (e.target instanceof Handle) return
 		if (!this.isDragging || this.activeHandle || !this.parent) return
 
 		const from = this.parent.toLocal(this.lastPointer)
