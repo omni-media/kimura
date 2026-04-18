@@ -120,10 +120,9 @@ export class AlignGuidelines {
 	}
 
 	private watchMouseUp() {
-		this.stage.on('pointerup', () => {
-			this.clearLinesMeta()
-			this.clearGuideline()
-		})
+		const clear = () => this.reset()
+		this.stage.on('pointerup', clear)
+		this.stage.on('pointerupoutside', clear)
 	}
 
 	private watchMouseWheel() {
@@ -399,18 +398,12 @@ export class AlignGuidelines {
 		draggingObjCoords: ACoordsAppendCenter
 		snapYPoint: number | null
 	}) {
-		const origin = this.kimura.isDragging
-			? this.kimura.worldCenter
-			: draggingObjCoords.c
+		const currentCenter = draggingObjCoords.c
 
 		const candidateSnapGlobal = new Point(
-			snapXPoint ?? origin.x,
-			snapYPoint ?? origin.y
+			snapXPoint ?? currentCenter.x,
+			snapYPoint ?? currentCenter.y
 		)
-
-		const currentCenter = this.kimura.isDragging
-			? this.kimura.worldCenter
-			: draggingObjCoords.c
 
 		const dx = candidateSnapGlobal.x - currentCenter.x
 		const dy = candidateSnapGlobal.y - currentCenter.y
@@ -443,6 +436,11 @@ export class AlignGuidelines {
 
 	clearGuideline() {
 		this.graphics.clear()
+	}
+
+	reset() {
+		this.clearLinesMeta()
+		this.clearGuideline()
 	}
 
 	render() {

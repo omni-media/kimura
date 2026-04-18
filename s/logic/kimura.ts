@@ -83,7 +83,7 @@ export class Kimura extends Container {
 		this.addChild(this.wireframe, this.#maskG, ...Object.values(this.#handles))
 		this.#bindEvents()
 		this.on('globalpointermove', (e) => {
-			if (this.activeObject && this.isDragging) {
+			if (this.activeObject && this.isDragging && !this.activeHandle) {
 				this.guidelines.on_object_move_or_scale(e)
 				this.guidelines.render()
 			}
@@ -146,6 +146,7 @@ export class Kimura extends Container {
 
 	#onDown = (e: FederatedPointerEvent) => {
 		this.isDragging = true
+		this.#childStart.clear()
 		this.lastPointer.copyFrom(e.global)
 		this.cursor = 'grabbing'
 	}
@@ -153,7 +154,9 @@ export class Kimura extends Container {
 	#onUp = () => {
 		this.isDragging = false
 		this.activeHandle = null
+		this.#childStart.clear()
 		this.cursor = 'default'
+		this.guidelines.reset()
 	}
 
 	#onMove = (e: FederatedPointerEvent) => {
@@ -179,6 +182,7 @@ export class Kimura extends Container {
 	#beginHandleDrag(handle: HandleKind, _start: Point) {
 		this.isDragging = true
 		this.activeHandle = handle
+		this.guidelines.reset()
 		this.#childStart.clear()
 
 		for (const c of this.#group)
@@ -258,6 +262,8 @@ export class Kimura extends Container {
 		this.isDragging = false
 		this.#angle = this.rotation
 		this.activeHandle = null
+		this.#childStart.clear()
+		this.guidelines.reset()
 		this.#refresh(this.#angle)
 	}
 
@@ -373,7 +379,9 @@ export class Kimura extends Container {
 
 	#applyWorldDelta(worldDelta: Matrix) {
 		for (const c of this.#group) {
-			const start = this.#childStart.get(c) ?? c.localTransform.clone()
+			const start = this.activeHandle
+				? (this.#childStart.get(c) ?? c.localTransform.clone())
+				: c.localTransform.clone()
 			const parent = c.parent
 			if (!start || !parent) continue
 			const parentInv = parent.worldTransform.clone().invert()
