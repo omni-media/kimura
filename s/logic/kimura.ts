@@ -131,6 +131,18 @@ export class Kimura extends Container {
 		]
 	}
 
+	set crop([top, right, bottom, left]: [top: number, right: number, bottom: number, left: number]) {
+		const max = this.#unclippedLocal
+		this.#clippedLocal.copyFrom(new Rectangle(
+			max.x + max.width * left,
+			max.y + max.height * top,
+			max.width * Math.max(0, 1 - left - right),
+			max.height * Math.max(0, 1 - top - bottom),
+		))
+		this.#clampRectToMax(this.#clippedLocal, this.#unclippedLocal)
+		this.#refresh()
+	}
+
 	applyWorldDelta(matrix: Matrix) {
 		this.#applyWorldDelta(matrix)
 		this.#pivotWorld.copyFrom(matrix.apply(this.#pivotWorld))
