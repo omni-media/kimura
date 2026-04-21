@@ -51,6 +51,24 @@ app.stage.addChild(new Kimura({
 
 ```
 
+## State ownership
+
+Kimura mutates the transforms of objects in `kimura.group`. Read the resulting
+transform from the Pixi object:
+
+```js
+const transform = object.localTransform
+```
+
+Read and write crop through `kimura.crop`. Kimura may temporarily replace
+`object.mask` while editing; existing masks are restored when the object leaves
+the group, but they are not interpreted as crop state.
+
+```js
+kimura.group = [object]
+kimura.crop = [top, right, bottom, left]
+```
+
 <p align="center">
 <img src="https://i.imgur.com/b82qYjF.png" width="100%" />
 </p>
