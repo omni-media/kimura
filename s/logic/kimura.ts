@@ -32,6 +32,7 @@ export class Kimura extends Container {
 
 	#handles: Record<string, Handle>
 	#childStart = new Map<Container, Matrix>()
+	#previousMasks = new Map<Container, Container>()
 	#pivotWorld = new Point()
 	#angle = 0
 	#startAngle = 0
@@ -98,9 +99,27 @@ export class Kimura extends Container {
 	get group() { return this.#group }
 
 	set group(items: Container[]) {
-		for (const obj of this.#group)
+		for (const obj of this.#group) {
 			if (obj.mask === this.#maskG)
 				obj.mask = null
+
+			const previousMask = this.#previousMasks.get(obj)
+			if (previousMask) {
+				if (previousMask.parent !== obj)
+					obj.addChild(previousMask)
+				obj.mask = previousMask
+				this.#previousMasks.delete(obj)
+			}
+		}
+
+		for (const obj of items) {
+			const previousMask = obj.mask
+			if (previousMask && previousMask instanceof Container && previousMask !== this.#maskG) {
+				obj.mask = null
+				previousMask.removeFromParent()
+				this.#previousMasks.set(obj, previousMask)
+			}
+		}
 
 		this.#group = items
 		if (items.length > 0) {
