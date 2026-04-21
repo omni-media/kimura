@@ -1,6 +1,6 @@
 {
   "name": "@omnimedia/kimura",
-  "version": "1.0.5-6",
+  "version": "1.0.5-7",
   "description": "A tool for interactively editing the transformation matrices of pixi objects.",
   "type": "module",
   "main": "x/index.js",
