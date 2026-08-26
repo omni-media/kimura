@@ -176,19 +176,28 @@ export class Kimura extends Container {
 	}
 
 	#initBounds() {
-		this.#syncPivotFromGroup()
-		const ob = this.#computeWorldAABB()
-
-		const local = new Rectangle(-ob.width / 2, -ob.height / 2, ob.width, ob.height)
-		this.#unclippedLocal.copyFrom(local)
-		this.#clippedLocal.copyFrom(local)
+		const {angle, pivot, bounds} = this.#computeFrame()
+		this.#angle = angle
+		this.#pivotWorld.copyFrom(pivot)
+		this.#unclippedLocal.copyFrom(bounds)
+		this.#clippedLocal.copyFrom(bounds)
 
 		this.#refresh()
 	}
 
-	#syncPivotFromGroup() {
-		const ob = this.#computeWorldAABB()
-		this.#pivotWorld.set(ob.x + ob.width / 2, ob.y + ob.height / 2)
+	#computeFrame() {
+		const object = this.#group.length === 1 ? this.#group[0] : undefined
+		const bounds = object?.getLocalBounds() ?? this.#computeWorldAABB()
+		const matrix = object?.getGlobalTransform()
+		const center = new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+		const width = bounds.width * (matrix ? Math.hypot(matrix.a, matrix.b) : 1)
+		const height = bounds.height * (matrix ? Math.hypot(matrix.c, matrix.d) : 1)
+
+		return {
+			angle: matrix ? Math.atan2(matrix.b, matrix.a) : 0,
+			pivot: matrix?.apply(center) ?? center,
+			bounds: new Rectangle(-width / 2, -height / 2, width, height),
+		}
 	}
 
 	#onDown = (e: FederatedPointerEvent) => {
