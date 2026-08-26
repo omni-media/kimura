@@ -8,12 +8,11 @@ export class Wireframe extends Graphics {
 		this.cursor = 'move'
   }
 
-	draw(bounds: Rectangle) {
+	draw(bounds: Rectangle, scale = 1) {
 		const color = 0x55c1ff
-		const thickness = 1
 
 		this.clear()
-		this.setStrokeStyle({ width: thickness, color })
+		this.setStrokeStyle({width: scale, color})
 			.rect(bounds.x, bounds.y, bounds.width, bounds.height)
 			.stroke()
 

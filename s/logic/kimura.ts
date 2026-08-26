@@ -36,6 +36,7 @@ export class Kimura extends Container {
 	#pivotWorld = new Point()
 	#angle = 0
 	#startAngle = 0
+	#overlayScale = 1
 
 	#opBounds = new Rectangle()
 	#scalePivotLocal = new Point()
@@ -132,6 +133,15 @@ export class Kimura extends Container {
 
 	get worldCenter() {
 		return this.#pivotWorld.clone()
+	}
+
+	setOverlayScale(scale: number) {
+		if (scale === this.#overlayScale) return
+		this.#overlayScale = scale
+		for (const handle of Object.values(this.#handles))
+			handle.scale.set(scale)
+		if (this.#group.length)
+			this.wireframe.draw(this.#clippedLocal, scale)
 	}
 
 	get crop(): [top: number, right: number, bottom: number, left: number] {
@@ -343,7 +353,7 @@ export class Kimura extends Container {
 		this.rotation = angle
 
 		const r = this.#clippedLocal
-		this.wireframe.draw(r)
+		this.wireframe.draw(r, this.#overlayScale)
 
 		const cx = r.x + r.width / 2
 		const cy = r.y + r.height / 2

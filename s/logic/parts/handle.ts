@@ -29,7 +29,7 @@ export class Handle extends Graphics {
 	}
 
 	#draw() {
-		this.circle(0, 0, 6)
+		this.circle(0, 0, 5)
 		this.fill({color: '#ffffff'})
 		this.stroke({width: 1, color: 0x000000, alpha: 0.4})
 	}
