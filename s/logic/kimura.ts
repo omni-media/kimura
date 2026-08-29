@@ -52,6 +52,7 @@ export class Kimura extends Container {
 	constructor(private opts: {
 		stage: Container<ContainerChild>
 		centeredScaling?: boolean
+		preserveAspectRatio?: boolean
 	}) {
 		super()
 		this.eventMode = 'static'
@@ -95,6 +96,22 @@ export class Kimura extends Container {
 
 	get activeObject() {
 		return this.group[0]
+	}
+
+	get centeredScaling() {
+		return this.opts.centeredScaling ?? true
+	}
+
+	set centeredScaling(value: boolean) {
+		this.opts.centeredScaling = value
+	}
+
+	get preserveAspectRatio() {
+		return this.opts.preserveAspectRatio ?? true
+	}
+
+	set preserveAspectRatio(value: boolean) {
+		this.opts.preserveAspectRatio = value
 	}
 
 	get group() { return this.#group }
@@ -382,7 +399,7 @@ export class Kimura extends Container {
 
 	#setScalePivot(handle: HandleKind) {
 		const s = this.#opBounds
-		if (this.opts.centeredScaling) {
+		if (this.centeredScaling) {
 			this.#scalePivotLocal.set(s.x + s.width / 2, s.y + s.height / 2)
 			return
 		}
@@ -393,7 +410,24 @@ export class Kimura extends Container {
 	}
 
 	#proposeScaledRect(handle: HandleKind, p: Point, pivot: Point, start: Rectangle) {
-		if (this.opts.centeredScaling) {
+		if (this.preserveAspectRatio) {
+			const cornerX = handle.endsWith('l') ? start.x : start.x + start.width
+			const cornerY = handle.startsWith('t') ? start.y : start.y + start.height
+			const startX = cornerX - pivot.x
+			const startY = cornerY - pivot.y
+			const pointerX = p.x - pivot.x
+			const pointerY = p.y - pivot.y
+			const projectedScale = (pointerX * startX + pointerY * startY) /
+				(startX * startX + startY * startY)
+			const minimumScale = Math.max(
+				this.#minClipW / start.width,
+				this.#minClipH / start.height,
+			)
+			const scale = Math.max(minimumScale, projectedScale)
+			return this.#scaleRectAbout(start, pivot, scale, scale)
+		}
+
+		if (this.centeredScaling) {
 			const w = Math.max(this.#minClipW, Math.abs(p.x - pivot.x) * 2)
 			const h = Math.max(this.#minClipH, Math.abs(p.y - pivot.y) * 2)
 			return new Rectangle(pivot.x - w / 2, pivot.y - h / 2, w, h)

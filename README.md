@@ -69,6 +69,19 @@ kimura.group = [object]
 kimura.crop = [top, right, bottom, left]
 ```
 
+Corner scaling is centered and preserves the aspect ratio by default. Both can
+be configured at construction or changed at runtime:
+
+```js
+const kimura = new Kimura({
+    stage,
+    centeredScaling: false,
+    preserveAspectRatio: false,
+})
+kimura.centeredScaling = true
+kimura.preserveAspectRatio = true
+```
+
 <p align="center">
 <img src="https://i.imgur.com/b82qYjF.png" width="100%" />
 </p>
