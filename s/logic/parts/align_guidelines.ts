@@ -159,6 +159,44 @@ export class AlignGuidelines {
 		this.traversAllObjects(activeObject, canvasObjects)
 	}
 
+	snapScalePoint(point: Point, pivot: Point, preserveAspectRatio: boolean) {
+		this.clearLinesMeta()
+		this.clearGuideline()
+
+		const closest = (value: number, size: number) => [0, size / 2, size]
+			.filter(target => this.isInRange(value, target))
+			.sort((a, b) => Math.abs(value - a) - Math.abs(value - b))[0]
+
+		const targetX = closest(point.x, this.kimura.stageWidth)
+		const targetY = closest(point.y, this.kimura.stageHeight)
+		const distanceX = targetX === undefined ? Infinity : Math.abs(point.x - targetX)
+		const distanceY = targetY === undefined ? Infinity : Math.abs(point.y - targetY)
+		const snapped = point.clone()
+
+		if (preserveAspectRatio && (targetX !== undefined || targetY !== undefined)) {
+			const axis = distanceX <= distanceY ? 'x' : 'y'
+			const target = axis === 'x' ? targetX! : targetY!
+			const scale = (target - pivot[axis]) / (point[axis] - pivot[axis])
+			if (Number.isFinite(scale) && scale > 0)
+				snapped.set(
+					pivot.x + (point.x - pivot.x) * scale,
+					pivot.y + (point.y - pivot.y) * scale,
+				)
+		}
+		else {
+			if (targetX !== undefined) snapped.x = targetX
+			if (targetY !== undefined) snapped.y = targetY
+		}
+
+		if (targetX !== undefined && snapped.x === targetX)
+			this.verticalLines.push({x: targetX, y1: 0, y2: this.kimura.stageHeight})
+		if (targetY !== undefined && snapped.y === targetY)
+			this.horizontalLines.push({y: targetY, x1: 0, x2: this.kimura.stageWidth})
+
+		this.render()
+		return snapped
+	}
+
 	private getObjDraggingObjCoords(activeObject: Container): ACoordsAppendCenter {
 		const bounds = activeObject.getBounds()
 		const aCoords = {

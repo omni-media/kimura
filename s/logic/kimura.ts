@@ -289,11 +289,21 @@ export class Kimura extends Container {
 
 	#scale(handle: HandleKind, global: Point) {
 		const pivotLocal = this.#scalePivotLocal
-		const proposed = this.#proposeScaledRect(handle, this.toLocal(global), pivotLocal, this.#opBounds)
+		const pivotWorld = this.toGlobal(pivotLocal)
+		let proposed = this.#proposeScaledRect(handle, this.toLocal(global), pivotLocal, this.#opBounds)
+		const corner = new Point(
+			handle.endsWith('l') ? proposed.x : proposed.x + proposed.width,
+			handle.startsWith('t') ? proposed.y : proposed.y + proposed.height,
+		)
+		const snapped = this.guidelines.snapScalePoint(
+			this.toGlobal(corner),
+			pivotWorld,
+			this.preserveAspectRatio,
+		)
+		proposed = this.#proposeScaledRect(handle, this.toLocal(snapped), pivotLocal, this.#opBounds)
 
 		const sx = proposed.width / this.#opBounds.width
 		const sy = proposed.height / this.#opBounds.height
-		const pivotWorld = this.toGlobal(pivotLocal)
 
 		this.#applyWorldDelta(this.#deltaScale(pivotWorld, this.#angle, sx, sy))
 
